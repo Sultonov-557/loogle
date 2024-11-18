@@ -1,0 +1,52 @@
+
+# Loogle
+
+Multi threaded Web claver and Search engine made using javascript
+
+
+## Environment Variables
+
+To run this project, you will need to add the following environment variables to your .env file
+
+`PORT`
+
+`DB_HOST`
+
+`DB_PORT`
+
+`DB_USER`
+
+`DB_PASS`
+
+`DB_NAME`
+
+
+## Deployment
+
+Install packages
+
+```bash
+  npm i
+```
+
+Run crawler
+
+```bash
+  npm run crawler
+```
+
+Run Search Engine
+
+```bash
+  npm run search
+```
+
+Run All
+
+```bash
+  npm run start
+```
+## Authors
+
+- [@Sultonov-557](https://www.github.com/Sultonov-557)
+
