@@ -43,8 +43,11 @@ if (parentPort) {
 						if (
 							link.toString() == url ||
 							link.hostname.startsWith("api.") ||
+							link.hostname.startsWith("id.") ||
 							link.pathname.endsWith(".pdf") ||
-							["web.archive.org"].includes(link.hostname)
+							["web.archive.org", "gs.statcounter.com"].includes(
+								link.hostname
+							)
 						) {
 							return false;
 						}
