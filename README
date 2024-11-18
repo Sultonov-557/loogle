@@ -29,19 +29,7 @@ Install packages
   npm i
 ```
 
-Run crawler
-
-```bash
-  npm run crawler
-```
-
-Run Search Engine
-
-```bash
-  npm run search
-```
-
-Run All
+Run
 
 ```bash
   npm run start
