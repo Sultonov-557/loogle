@@ -66,7 +66,7 @@ if (parentPort) {
 							}
 
 							if (
-								robot &&
+								!robot ||
 								robot.isDisallowed(link.toString(), "loogle") === true
 							) {
 								return false;
