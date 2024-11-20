@@ -1,8 +1,6 @@
-
 # Loogle
 
 Multi threaded Web crawler and Search engine made using javascript for hackaton
-
 
 ## Environment Variables
 
@@ -20,21 +18,28 @@ To run this project, you will need to add the following environment variables to
 
 `DB_NAME`
 
-
 ## Deployment
 
-Install packages
+To deploy this project run
 
 ```bash
-  npm i
+  npm install
 ```
-
-Run
 
 ```bash
   npm run start
 ```
+
+## Tech Stack
+
+**Client:** vanilla JS, plain HTML, TailwindCSS
+
+**Server:** Node, Express
+
+**Database:** Postgres
+
+**ORM:** TypeORM
+
 ## Authors
 
-- [@Sultonov-557](https://www.github.com/Sultonov-557)
-
+-   [@Sultonov-557](https://www.github.com/Sultonov-557)
