@@ -28,42 +28,67 @@
                 yellow: "#EED49F",
               },
             },
+            fontFamily: {
+              sans: ["Inter", "sans-serif"],
+            },
+            fontSize: {
+              base: "16px",
+              sm: "14px",
+              md: "18px",
+              lg: "20px",
+              xl: "24px",
+              "2xl": "28px",
+              "3xl": "32px",
+              "4xl": "36px",
+              "5xl": "40px",
+              "6xl": "44px",
+            },
+            animation: {
+              fadeIn: "fadeIn 0.5s ease-out",
+              slideUp: "slideUp 0.5s ease-out",
+            },
+            keyframes: {
+              fadeIn: {
+                from: { opacity: "0" },
+                to: { opacity: "1" },
+              },
+              slideUp: {
+                from: { transform: "translateY(10px)", opacity: "0" },
+                to: { transform: "translateY(0)", opacity: "1" },
+              },
+            },
           },
         },
       };
     </script>
   </head>
   <body class="flex items-center justify-center bg-base text-text min-h-screen">
-    <div class="max-w-6xl w-full p-6 bg-overlay rounded-lg shadow-lg flex space-x-6">
+    <div class="max-w-7xl w-full p-6 bg-overlay rounded-lg shadow-lg gap-6">
       <!-- Main Content -->
-      <div class="flex-1">
+      <div class="flex-1 animate-fadeIn w-full">
         <div class="mb-4">
           <input
             id="search_input"
             type="text"
-            class="w-full h-12 bg-base-200 rounded-md p-4 text-lg text-text-muted focus:outline-none focus:ring focus:ring-accent-blue placeholder-text-muted"
+            class="w-full h-12 bg-base-200 rounded-md p-4 text-lg text-text-muted focus:outline-none focus:ring focus:ring-accent-blue placeholder-text-muted transition-all duration-300"
             placeholder="Search..."
           />
         </div>
-        <div id="search_time" class="text-text-muted text-sm mb-4"></div>
-        <div id="search_results" class="grid grid-cols-1 gap-6"></div>
-      </div>
+        <div id="search_time" class="text-text-muted text-sm mb-4 animate-slideUp"></div>
+        <div
+          id="search_results"
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-slideUp"
+        ></div>
 
-      <!-- Sidebar -->
-      <aside class="w-1/3 bg-base-100 p-6 rounded-md shadow-lg text-text">
-        <h2 id="sidebar_title" class="text-xl font-bold text-accent-blue mb-4">Result Details</h2>
-        <div id="sidebar_content">
-          <p class="text-text-muted">Select a result to see more details here.</p>
-        </div>
-      </aside>
+        <div id="pagination" class="flex justify-center items-center mt-4"></div>
+      </div>
     </div>
 
     <script>
       const searchInput = document.querySelector("#search_input");
       const searchResults = document.querySelector("#search_results");
       const searchTime = document.querySelector("#search_time");
-      const sidebarTitle = document.querySelector("#sidebar_title");
-      const sidebarContent = document.querySelector("#sidebar_content");
+      const pagination = document.querySelector("#pagination");
 
       searchInput.onchange = async () => {
         await search(searchInput.value);
@@ -77,21 +102,24 @@
         }
       };
 
-      async function search(input) {
+      async function search(input, page = 1) {
         history.pushState({}, null, `/${input}`);
-        const req = await fetch(`./search/${searchInput.value}`);
+        const req = await fetch(`./search/${searchInput.value}?page=${page}`);
         const body = await req.json();
         const results = body.data.map((result, index) => {
           const faviconUrl = `https://www.google.com/s2/favicons?sz=64&domain_url=${new URL(result.url).origin}`;
           const descriptionContent = result.description
-            ? `<p class="text-text-muted text-sm mt-2">${result.description}</p>`
+            ? `<p class="text-text-muted text-sm mt-2 truncate">${result.description}</p>`
             : Object.keys(result.headers)
-                .map((headerType) => `<p class="text-text-muted text-sm">${result.headers[headerType].join(", ")}</p>`)
+                .map(
+                  (headerType) =>
+                    `<p class="text-text-muted text-sm truncate">${result.headers[headerType].join(", ")}</p>`
+                )
                 .join("");
 
-          return `<div class="p-6 border border-base-200 rounded-md bg-base hover:bg-base-200 transition-shadow shadow-lg hover:shadow-xl cursor-pointer"
+          return `<div class="p-6 border border-base-200 rounded-md bg-base hover:bg-base-200 transition-all shadow-lg hover:shadow-2xl cursor-pointer"
                       onclick="updateSidebar(${index})">
-                      <a href="${result.url}" class="flex items-center space-x-4">
+                      <a href="${result.url}" class="flex items-center space-x-4 hover:underline">
                         <img src="${faviconUrl}" alt="favicon" class="w-8 h-8 rounded" />
                         <span class="text-lg font-semibold text-accent-blue hover:text-accent-green">
                           ${result.title}
@@ -102,26 +130,15 @@
         });
 
         searchResults.innerHTML = results.join("");
-        searchTime.innerHTML = `Search time: <span class="font-semibold text-accent-yellow">${body.searchTime}ms</span>`;
+        searchTime.innerHTML = `Search time: <span class="font-semibold text-accent-yellow">${body.time}ms</span>`;
 
-        if (body.data.length > 0) {
-          updateSidebar(0, body.data);
+        // Pagination
+        const totalPages = body.total;
+        let paginationButtons = "";
+        for (let i = 1; i <= totalPages; i++) {
+          paginationButtons += `<button class="mx-1 px-3 py-1 rounded bg-base-200 hover:bg-accent-yellow hover:text-white transition-all text-text-muted text-lg font-semibold" onclick="search('${input}', ${i})">${i}</button>`;
         }
-      }
-
-      function updateSidebar(index, data) {
-        const result = data[index] || JSON.parse(searchResults.dataset.results)[index];
-        sidebarTitle.innerText = result.title;
-        sidebarContent.innerHTML = `
-          <p class="text-sm text-text-muted mb-4"><strong>URL:</strong> <a href="${
-            result.url
-          }" class="text-accent-blue hover:underline" target="_blank">${result.url}</a></p>
-          ${
-            result.description
-              ? `<p class="text-sm text-text">${result.description}</p>`
-              : `<p class="text-sm text-text-muted">No description available.</p>`
-          }
-        `;
+        pagination.innerHTML = paginationButtons;
       }
     </script>
   </body>

@@ -10,11 +10,11 @@ export function start() {
     res.sendFile(path.join(__dirname, "../../src/search/public/index.html"));
   });
 
-  app.get("/search/:query/:page?", async (req, res) => {
-    const query = req.params.query;
-    const page = parseInt(req.params.page || "1", 10);
+  app.get("/search/:query", async (req, res) => {
+    const { query } = req.params;
+    const { page } = req.query as { page: string };
     const limit = 10;
-    const offset = (page - 1) * limit;
+    const offset = (parseInt(page || "1", 10) - 1) * limit;
     const querySplit = query.split(" ");
     const startTime = new Date();
 
@@ -40,14 +40,36 @@ export function start() {
       skip: offset,
     });
 
+    const totalResults = await WebPageRepo.count({
+      where: [
+        {
+          keywords: Or(
+            ...querySplit.map((word) => Raw((alias) => `LOWER(${alias}) Like LOWER(:value)`, { value: `%${word}%` }))
+          ),
+        },
+        {
+          description: Or(
+            ...querySplit.map((word) => Raw((alias) => `LOWER(${alias}) Like LOWER(:value)`, { value: `%${word}%` }))
+          ),
+        },
+        {
+          title: Or(
+            ...querySplit.map((word) => Raw((alias) => `LOWER(${alias}) Like LOWER(:value)`, { value: `%${word}%` }))
+          ),
+        },
+      ],
+    });
+
+    const totalPages = Math.ceil(totalResults / limit);
+
     const endTime = new Date();
-    const searchTime = endTime.getTime() - startTime.getTime(); // Corrected to use getTime() for date subtraction
+    const searchTime = endTime.getTime() - startTime.getTime();
 
     res.send({
       data,
-      searchTime: searchTime,
-      resultsCount: data.length,
-      currentPage: page,
+      time: searchTime,
+      current: parseInt(page, 10),
+      total: totalPages,
     });
   });
 
