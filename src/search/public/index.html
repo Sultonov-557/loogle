@@ -4,27 +4,71 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://cdn.tailwindcss.com"></script>
-  </head>
-  <body class="flex bg-slate-800 h-full w-full">
-    <div class="w-full h-full m-6">
-      <div class="w-full h-12">
-        <input
-          id="search_input"
-          type="text"
-          class="w-full h-full bg-gray-700 rounded-md p-2 text-lg text-gray-300 focus:outline-none"
-          placeholder="Search..."
-        />
-      </div>
-      <div id="search_time" class="text-gray-400"></div>
-      <div id="search_results" class="w-full h-full m-6"></div>
-    </div>
     <script>
-      const searchInput = document.querySelector("input");
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              base: {
+                DEFAULT: "#24273A",
+                100: "#363A4F",
+                200: "#494D64",
+              },
+              overlay: "#1E2030",
+              text: {
+                DEFAULT: "#CAD3F5",
+                muted: "#A5ADCB",
+                accent: "#8AADF4",
+                highlight: "#F5A97F",
+              },
+              accent: {
+                blue: "#8AADF4",
+                peach: "#F5A97F",
+                green: "#A6DA95",
+                yellow: "#EED49F",
+              },
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body class="flex items-center justify-center bg-base text-text min-h-screen">
+    <div class="max-w-6xl w-full p-6 bg-overlay rounded-lg shadow-lg flex space-x-6">
+      <!-- Main Content -->
+      <div class="flex-1">
+        <div class="mb-4">
+          <input
+            id="search_input"
+            type="text"
+            class="w-full h-12 bg-base-200 rounded-md p-4 text-lg text-text-muted focus:outline-none focus:ring focus:ring-accent-blue placeholder-text-muted"
+            placeholder="Search..."
+          />
+        </div>
+        <div id="search_time" class="text-text-muted text-sm mb-4"></div>
+        <div id="search_results" class="grid grid-cols-1 gap-6"></div>
+      </div>
+
+      <!-- Sidebar -->
+      <aside class="w-1/3 bg-base-100 p-6 rounded-md shadow-lg text-text">
+        <h2 id="sidebar_title" class="text-xl font-bold text-accent-blue mb-4">Result Details</h2>
+        <div id="sidebar_content">
+          <p class="text-text-muted">Select a result to see more details here.</p>
+        </div>
+      </aside>
+    </div>
+
+    <script>
+      const searchInput = document.querySelector("#search_input");
       const searchResults = document.querySelector("#search_results");
       const searchTime = document.querySelector("#search_time");
-      searchInput.onchange = async (ev) => {
+      const sidebarTitle = document.querySelector("#sidebar_title");
+      const sidebarContent = document.querySelector("#sidebar_content");
+
+      searchInput.onchange = async () => {
         await search(searchInput.value);
       };
+
       window.onload = () => {
         const pathname = window.location.pathname.split("").splice(1).join("");
         if (pathname !== "") {
@@ -32,26 +76,52 @@
           searchInput.value = pathname;
         }
       };
+
       async function search(input) {
         history.pushState({}, null, `/${input}`);
         const req = await fetch(`./search/${searchInput.value}`);
         const body = await req.json();
-        const results = body.data.map((result) => {
-          let descriptionContent = result.description ? `<p class="text-gray-400">${result.description}</p>` : "";
-          if (!descriptionContent) {
-            descriptionContent = Object.keys(result.headers)
-              .map((headerType) => {
-                return `<p class="text-gray-400"> ${result.headers[headerType].join(", ")}</p>`;
-              })
-              .join("");
-          }
-          return `<div class="p-4 border border-gray-700 rounded-md mb-4 w-full">
-                      <a href="${result.url}" class="text-lg font-semibold text-gray-300">${result.title}</a>
+        const results = body.data.map((result, index) => {
+          const faviconUrl = `https://www.google.com/s2/favicons?sz=64&domain_url=${new URL(result.url).origin}`;
+          const descriptionContent = result.description
+            ? `<p class="text-text-muted text-sm mt-2">${result.description}</p>`
+            : Object.keys(result.headers)
+                .map((headerType) => `<p class="text-text-muted text-sm">${result.headers[headerType].join(", ")}</p>`)
+                .join("");
+
+          return `<div class="p-6 border border-base-200 rounded-md bg-base hover:bg-base-200 transition-shadow shadow-lg hover:shadow-xl cursor-pointer"
+                      onclick="updateSidebar(${index})">
+                      <a href="${result.url}" class="flex items-center space-x-4">
+                        <img src="${faviconUrl}" alt="favicon" class="w-8 h-8 rounded" />
+                        <span class="text-lg font-semibold text-accent-blue hover:text-accent-green">
+                          ${result.title}
+                        </span>
+                      </a>
                       ${descriptionContent}
                     </div>`;
         });
+
         searchResults.innerHTML = results.join("");
-        searchTime.innerHTML = `Search time: ${body.searchTime}ms`;
+        searchTime.innerHTML = `Search time: <span class="font-semibold text-accent-yellow">${body.searchTime}ms</span>`;
+
+        if (body.data.length > 0) {
+          updateSidebar(0, body.data);
+        }
+      }
+
+      function updateSidebar(index, data) {
+        const result = data[index] || JSON.parse(searchResults.dataset.results)[index];
+        sidebarTitle.innerText = result.title;
+        sidebarContent.innerHTML = `
+          <p class="text-sm text-text-muted mb-4"><strong>URL:</strong> <a href="${
+            result.url
+          }" class="text-accent-blue hover:underline" target="_blank">${result.url}</a></p>
+          ${
+            result.description
+              ? `<p class="text-sm text-text">${result.description}</p>`
+              : `<p class="text-sm text-text-muted">No description available.</p>`
+          }
+        `;
       }
     </script>
   </body>
