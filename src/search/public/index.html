@@ -15,11 +15,13 @@
           placeholder="Search..."
         />
       </div>
+      <div id="search_time" class="text-gray-400"></div>
       <div id="search_results" class="w-full h-full m-6"></div>
     </div>
     <script>
       const searchInput = document.querySelector("input");
       const searchResults = document.querySelector("#search_results");
+      const searchTime = document.querySelector("#search_time");
       searchInput.onchange = async (ev) => {
         await search(searchInput.value);
       };
@@ -35,13 +37,21 @@
         const req = await fetch(`./search/${searchInput.value}`);
         const body = await req.json();
         const results = body.data.map((result) => {
+          let descriptionContent = result.description ? `<p class="text-gray-400">${result.description}</p>` : "";
+          if (!descriptionContent) {
+            descriptionContent = Object.keys(result.headers)
+              .map((headerType) => {
+                return `<p class="text-gray-400"> ${result.headers[headerType].join(", ")}</p>`;
+              })
+              .join("");
+          }
           return `<div class="p-4 border border-gray-700 rounded-md mb-4 w-full">
                       <a href="${result.url}" class="text-lg font-semibold text-gray-300">${result.title}</a>
-                      ${result.description ? `<p class="text-gray-400">${result.description}</p>` : ""}
-                      
+                      ${descriptionContent}
                     </div>`;
         });
         searchResults.innerHTML = results.join("");
+        searchTime.innerHTML = `Search time: ${body.searchTime}ms`;
       }
     </script>
   </body>
