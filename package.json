@@ -20,7 +20,6 @@
     "path": "^0.12.7",
     "pg": "^8.13.1",
     "reflect-metadata": "^0.2.2",
-    "robots-parser": "^3.0.1",
     "tsx": "^4.19.2",
     "typeorm": "^0.3.20"
   },
