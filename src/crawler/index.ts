@@ -40,6 +40,7 @@ export function start() {
             url: data.url,
           })
         );
+        console.log(`indexed ${data.url}`);
       }
       if (data.queue) {
         await QueueRepo.save(data.queue.map((url) => QueueRepo.create({ url })));
