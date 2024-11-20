@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="flex bg-slate-800 h-full w-full">
+    <div class="w-full h-full m-6">
+      <div class="w-full h-12">
+        <input
+          id="search_input"
+          type="text"
+          class="w-full h-full bg-gray-700 rounded-md p-2 text-lg text-gray-300 focus:outline-none"
+          placeholder="Search..."
+        />
+      </div>
+      <div id="search_results" class="w-full h-full m-6"></div>
+    </div>
+    <script>
+      const searchInput = document.querySelector("input");
+      const searchResults = document.querySelector("#search_results");
+      searchInput.onchange = async (ev) => {
+        await search(searchInput.value);
+      };
+      window.onload = () => {
+        const pathname = window.location.pathname.split("").splice(1).join("");
+        if (pathname !== "") {
+          search(pathname);
+          searchInput.value = pathname;
+        }
+      };
+      async function search(input) {
+        history.pushState({}, null, `/${input}`);
+        const req = await fetch(`./search/${searchInput.value}`);
+        const body = await req.json();
+        const results = body.data.map((result) => {
+          return `<div class="p-4 border border-gray-700 rounded-md mb-4 w-full">
+                      <a href="${result.url}" class="text-lg font-semibold text-gray-300">${result.title}</a>
+                      ${result.description ? `<p class="text-gray-400">${result.description}</p>` : ""}
+                      
+                    </div>`;
+        });
+        searchResults.innerHTML = results.join("");
+      }
+    </script>
+  </body>
+</html>

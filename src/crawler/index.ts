@@ -25,7 +25,6 @@ export function start() {
     const worker = new Worker("./dist/crawler/bot.js");
     worker.on("message", async (data: ScrapeData) => {
       if (!data.success) return;
-      console.log(`scraped: ${data.url}\nurls found:${data.queue.length}\nworkers free: ${workers.length}\n`);
 
       if (TEST_MODE) return;
 
@@ -59,7 +58,6 @@ async function next() {
 
   if (worker && queue) {
     if (!(await WebPageRepo.existsBy({ url: queue.url }))) {
-      console.log(`scraping ${queue.url}\n`);
       worker.postMessage(queue.url);
     }
 
