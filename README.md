@@ -36,7 +36,7 @@ To deploy this project run
 
 **Server:** Node, Express
 
-**Database:** Postgres
+**Database:** Postgres, Redis
 
 **ORM:** TypeORM
 
