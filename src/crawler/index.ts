@@ -26,11 +26,11 @@ export function start() {
   for (let i = 0; i < 8; i++) {
     const worker = new Worker("./dist/crawler/bot.js");
     worker.on("message", async (data: ScrapeData) => {
-      if (!data.success) return;
-
       if (TEST_MODE) return;
 
       workers.push(worker);
+
+      if (!data.success) return;
 
       if (!(await WebPageRepo.existsBy({ url: data.url }))) {
         await WebPageRepo.save(
