@@ -106,6 +106,12 @@
 
       async function search(input, page = 1) {
         history.pushState({}, null, `/${input}`);
+        if (input == "") {
+          pagination.innerHTML = "";
+          searchResults.innerHTML = "";
+          searchTime.innerHTML = "";
+          return;
+        }
         const req = await fetch(`./search/${searchInput.value}?page=${page}`);
         const body = await req.json();
         const results = body.data.map((result, index) => {
