@@ -1,5 +1,5 @@
 import { Like, Not } from "typeorm";
-import { QueueRepo, WebPageRepo } from "../database";
+import { database, QueueRepo, WebPageRepo } from "../database";
 import { Worker } from "worker_threads";
 
 const workers: Worker[] = [];
@@ -19,6 +19,8 @@ type ScrapeData =
     };
 
 const TEST_MODE = false;
+
+let frame = 0;
 
 export function start() {
   for (let i = 0; i < 8; i++) {
@@ -68,5 +70,21 @@ async function next() {
       await QueueRepo.delete(queue);
     }
   }
+
+  if (frame == 20) {
+    frame = 0;
+    await database.query(`
+      DELETE FROM queue T1
+      USING webpage T2
+      WHERE T1.url = T2.url
+    `);
+    await database.query(`
+      DELETE FROM queue T1
+      USING queue T2
+      WHERE T1.url = T2.url
+    `);
+    console.log("cleaned database from dubs")
+  }
+
   setTimeout(next, 1000);
 }

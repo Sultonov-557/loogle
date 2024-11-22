@@ -7,7 +7,7 @@ import { redis } from "../database/redis";
 export function start() {
   const app = express();
 
-  app.get("/:search?", (req, res) => {
+  app.get("/:search?", (_, res) => {
     res.sendFile(path.join(__dirname, "../../src/search/public/index.html"));
   });
 
@@ -25,7 +25,7 @@ export function start() {
       if (diff > 1000 * 60 * 60 * 24) {
         await redis.del(key);
       }
-      
+
       const endTime = new Date();
       const searchTime = endTime.getTime() - startTime.getTime();
       cache.time = searchTime;
