@@ -53,12 +53,14 @@ export function start() {
 
 async function next() {
   const worker = workers.shift();
+  if (!worker) return;
+
   const queue =
     (await QueueRepo.find({ take: 1, where: { url: Not(Like("%en.wikipedia.org%")) } }))[0] ||
     (await QueueRepo.find({ take: 1 }))[0];
-
-  if (worker && queue) {
+  if (queue) {
     if (!(await WebPageRepo.existsBy({ url: queue.url }))) {
+      console.log(`scraping ${queue.url}`);
       worker.postMessage(queue.url);
     }
 
