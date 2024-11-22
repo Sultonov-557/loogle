@@ -7,12 +7,16 @@ import { redis } from "../database/redis";
 export function start() {
   const app = express();
 
-  app.get("/logo.png", (_, res) => {
-    res.sendFile(path.join(__dirname, "../../src/search/public/logo.png"));
-  });
+  app.get("/click/:id", async (req, res) => {
+    const webpage = await WebPageRepo.findOneBy({ id: +req.params.id });
+    if (!webpage) {
+      res.redirect("/");
+      return;
+    }
 
-  app.get("/:search?", (_, res) => {
-    res.sendFile(path.join(__dirname, "../../src/search/public/index.html"));
+    webpage.clicks += 1;
+    WebPageRepo.save(webpage);
+    res.redirect(webpage.url);
   });
 
   app.get("/search/:query", async (req, res) => {
@@ -99,6 +103,14 @@ export function start() {
 
     await redis.set(key, JSON.stringify(output));
     res.send(output);
+  });
+
+  app.get("/logo.png", (_, res) => {
+    res.sendFile(path.join(__dirname, "../../src/search/public/logo.png"));
+  });
+
+  app.get("/:search?", (_, res) => {
+    res.sendFile(path.join(__dirname, "../../src/search/public/index.html"));
   });
 
   app.listen(3000, () => console.log(`listening on port 3000`));
