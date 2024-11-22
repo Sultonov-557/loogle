@@ -7,6 +7,10 @@ import { redis } from "../database/redis";
 export function start() {
   const app = express();
 
+  app.get("/logo.png", (_, res) => {
+    res.sendFile(path.join(__dirname, "../../src/search/public/logo.png"));
+  });
+
   app.get("/:search?", (_, res) => {
     res.sendFile(path.join(__dirname, "../../src/search/public/index.html"));
   });
