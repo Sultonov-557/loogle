@@ -14,18 +14,29 @@ export function start() {
   app.get("/search/:query", async (req, res) => {
     const { query } = req.params;
     const { page } = req.query as { page: string };
+    const startTime = new Date();
 
-    const key = `${page||1},${query}`;
-    const cache = await redis.get(key);
+    const key = `${page || 1},${query}`;
+    let cache: any = await redis.get(key);
     if (cache) {
-      res.send(JSON.parse(cache));
+      cache = JSON.parse(cache);
+
+      const diff = Date.now() - cache.date;
+      if (diff > 1000 * 60 * 60 * 24) {
+        await redis.del(key);
+      }
+      
+      const endTime = new Date();
+      const searchTime = endTime.getTime() - startTime.getTime();
+      cache.time = searchTime;
+
+      res.send(cache);
       return;
     }
 
     const limit = 10;
     const offset = (parseInt(page || "1", 10) - 1) * limit;
     const querySplit = query.split(" ");
-    const startTime = new Date();
 
     const data = await WebPageRepo.find({
       where: [
@@ -79,6 +90,7 @@ export function start() {
       time: searchTime,
       current: parseInt(page, 10),
       total: totalPages,
+      date: Date.now(),
     };
 
     await redis.set(key, JSON.stringify(output));
