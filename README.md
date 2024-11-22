@@ -1,4 +1,4 @@
-# Loogle
+![logo (ai generated lol)](https://raw.githubusercontent.com/Sultonov-557/loogle/refs/heads/main/src/search/public/logo.png)
 
 Multi threaded Web crawler and Search engine made using javascript for hackaton
 
@@ -42,4 +42,4 @@ To deploy this project run
 
 ## Authors
 
--   [@Sultonov-557](https://www.github.com/Sultonov-557)
+- [@Sultonov-557](https://www.github.com/Sultonov-557)
