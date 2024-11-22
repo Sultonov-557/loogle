@@ -40,7 +40,7 @@ export function start() {
 
     const limit = 10;
     const offset = (parseInt(page || "1", 10) - 1) * limit;
-    const querySplit = query.split(" ");
+    const querySplit = query.split(" ").filter((v) => v != "");
 
     const data = await WebPageRepo.find({
       where: [
