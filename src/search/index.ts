@@ -35,7 +35,7 @@ export function start() {
 
     res.send({
       token: sign({ id: user.id }, env.TOKEN_SECRET),
-      ...user
+      ...user,
     });
   });
 
@@ -73,6 +73,22 @@ export function start() {
 
     const history = JSON.parse(user.history);
     res.send(history);
+  });
+
+  app.post("/api/history/clear", Auth, async (req: Request & { user?: number }, res) => {
+    if (!req.user) {
+      res.send("auth");
+      return;
+    }
+    const user = await UserRepo.findOneBy({ id: req.user });
+    if (!user) {
+      res.send("user not found");
+      return;
+    }
+
+    user.history = "[]";
+    await UserRepo.save(user);
+    res.send(user);
   });
 
   app.get("/api/click/:id", async (req, res) => {

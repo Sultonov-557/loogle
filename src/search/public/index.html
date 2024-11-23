@@ -77,7 +77,12 @@
             aria-label="Search Input"
             onkeypress="if (event.key === 'Enter') search(this.value)"
           />
-          <div id="search_history" class="mt-2"></div>
+          <div class="flex items-center justify-between mt-2 p-4 bg-base-100 rounded-md shadow-md">
+            <div id="search_history" class="flex flex-wrap gap-2"></div>
+            <button id="clear_history" class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-700 transition">
+              Clear History
+            </button>
+          </div>
         </div>
 
         <div id="search_time" class="text-text-muted text-sm mb-4"></div>
@@ -154,6 +159,7 @@
 
         // Check login status and handle UI
         await checkLoginStatus();
+        updateSearchHistoryDisplay();
       };
 
       // Search function
@@ -202,7 +208,7 @@
         searchResults.innerHTML = results.join("");
         searchTime.innerHTML = `Search time: <span class="font-semibold text-accent-yellow">${body.time}ms</span>`;
 
-        updateSearchHistoryDisplay(token);
+        updateSearchHistoryDisplay();
 
         // Pagination
         const totalPages = body.total;
@@ -217,15 +223,17 @@
         }).join("");
       }
 
-      async function updateSearchHistoryDisplay(token) {
+      async function updateSearchHistoryDisplay() {
+        const token = localStorage.getItem("token");
+        let history = [];
+
         if (token) {
           try {
             // Fetch history from backend
             const res = await fetch("/api/history", {
               headers: { Authorization: `Bearer ${token}` },
             });
-            const history = await res.json();
-            renderSearchHistory(history);
+            history = await res.json();
           } catch (err) {
             console.error("Failed to fetch history from backend:", err);
           }
@@ -235,24 +243,64 @@
             .split("; ")
             .find((row) => row.startsWith("searchHistory="))
             ?.split("=")[1];
-          const historyArray = currentHistory ? JSON.parse(decodeURIComponent(currentHistory)) : [];
-          renderSearchHistory(historyArray);
+          history = currentHistory ? JSON.parse(decodeURIComponent(currentHistory)) : [];
         }
+
+        renderSearchHistory(history);
+
+        // Add functionality to clear history
+        const clearHistoryButton = document.querySelector("#clear_history");
+        if (clearHistoryButton) {
+          clearHistoryButton.onclick = () => {
+            clearSearchHistory(token);
+          };
+        }
+
+        // Add filtering functionality
+        searchInput.addEventListener("input", () => {
+          const filterText = searchInput.value.toLowerCase();
+          const filteredHistory = history.filter((query) => query.toLowerCase().includes(filterText));
+          renderSearchHistory(filteredHistory);
+        });
       }
 
       function renderSearchHistory(history) {
+        const searchHistoryContainer = document.querySelector("#search_history");
         if (!Array.isArray(history) || history.length === 0) {
-          searchHistory.innerHTML = "<p class='text-text-muted'>No search history available</p>";
+          searchHistoryContainer.innerHTML = "<p class='text-text-muted text-sm italic'>No matching history</p>";
           return;
         }
 
-        searchHistory.innerHTML = history
-          .slice(-5)
+        searchHistoryContainer.innerHTML = history
+          .slice(0, 5) // Limit to 5 results
           .map(
-            (query) =>
-              `<button class="text-accent-blue hover:text-accent-green underline" onclick="search('${query}')">${query}</button>`
+            (query) => `
+        <button
+          class="px-3 py-1 bg-accent-blue text-white text-sm rounded-md hover:bg-accent-green transition"
+          onclick="search('${query}')"
+        >
+          ${query}
+        </button>`
           )
-          .join(", ");
+          .join("");
+      }
+
+      function clearSearchHistory(token) {
+        if (token) {
+          // Clear history on the backend
+          fetch("/api/history/clear", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+          })
+            .then(() => {
+              renderSearchHistory([]);
+            })
+            .catch((err) => console.error("Error clearing history:", err));
+        } else {
+          // Clear history stored in cookies
+          document.cookie = "searchHistory=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+          renderSearchHistory([]);
+        }
       }
     </script>
   </body>
