@@ -9,11 +9,7 @@
         theme: {
           extend: {
             colors: {
-              base: {
-                DEFAULT: "#24273A",
-                100: "#363A4F",
-                200: "#494D64",
-              },
+              base: { DEFAULT: "#24273A", 100: "#363A4F", 200: "#494D64" },
               overlay: "#1E2030",
               text: {
                 DEFAULT: "#CAD3F5",
@@ -28,30 +24,13 @@
                 yellow: "#EED49F",
               },
             },
-            fontFamily: {
-              sans: ["Inter", "sans-serif"],
-            },
-            fontSize: {
-              base: "16px",
-              sm: "14px",
-              md: "18px",
-              lg: "20px",
-              xl: "24px",
-              "2xl": "28px",
-              "3xl": "32px",
-              "4xl": "36px",
-              "5xl": "40px",
-              "6xl": "44px",
-            },
+            fontFamily: { sans: ["Inter", "sans-serif"] },
             animation: {
               fadeIn: "fadeIn 0.5s ease-out",
               slideUp: "slideUp 0.5s ease-out",
             },
             keyframes: {
-              fadeIn: {
-                from: { opacity: "0" },
-                to: { opacity: "1" },
-              },
+              fadeIn: { from: { opacity: "0" }, to: { opacity: "1" } },
               slideUp: {
                 from: { transform: "translateY(10px)", opacity: "0" },
                 to: { transform: "translateY(0)", opacity: "1" },
@@ -62,28 +41,53 @@
       };
     </script>
   </head>
-  <body class="flex items-center justify-center bg-base text-text min-h-screen">
-    <div class="max-w-7xl w-full p-6 bg-overlay rounded-lg shadow-lg gap-6 flex flex-col items-center">
-      <!-- Logo -->
-      <img src="/logo.png" alt="Logo" class="h-32 mb-4" />
+  <body class="flex items-center justify-center bg-base text-text min-h-screen font-sans">
+    <div class="max-w-7xl w-full p-6 bg-overlay rounded-lg shadow-lg flex flex-col gap-6">
+      <!-- Header -->
+      <header class="flex justify-between items-center w-full">
+        <img src="/logo.png" alt="Logo" class="h-12" />
+        <div class="flex space-x-4">
+          <a
+            href="/auth/login"
+            id="login"
+            class="bg-accent-blue text-white py-2 px-4 rounded-md hover:bg-accent-green transition duration-300"
+            aria-label="Login"
+          >
+            Login
+          </a>
+          <a
+            href="/auth/register"
+            id="register"
+            class="bg-accent-blue text-white py-2 px-4 rounded-md hover:bg-accent-green transition duration-300"
+            aria-label="Register"
+          >
+            Register
+          </a>
+        </div>
+      </header>
+
       <!-- Main Content -->
-      <div class="flex-1 animate-fadeIn w-full">
+      <main class="w-full">
         <div class="mb-4">
           <input
             id="search_input"
             type="text"
             class="w-full h-12 bg-base-200 rounded-md p-4 text-lg text-text-muted focus:outline-none focus:ring focus:ring-accent-blue placeholder-text-muted transition-all duration-300"
             placeholder="Search..."
+            aria-label="Search Input"
+            onkeypress="if (event.key === 'Enter') search(this.value)"
           />
+          <div id="search_history" class="mt-2"></div>
         </div>
-        <div id="search_time" class="text-text-muted text-sm mb-4 animate-slideUp"></div>
+
+        <div id="search_time" class="text-text-muted text-sm mb-4"></div>
+        <div id="loading" class="hidden text-text-muted text-sm mb-4">Loading...</div>
         <div
           id="search_results"
           class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-slideUp"
         ></div>
-
         <div id="pagination" class="flex justify-center items-center mt-4"></div>
-      </div>
+      </main>
     </div>
 
     <script>
@@ -91,30 +95,87 @@
       const searchResults = document.querySelector("#search_results");
       const searchTime = document.querySelector("#search_time");
       const pagination = document.querySelector("#pagination");
+      const loginButton = document.querySelector("#login");
+      const registerButton = document.querySelector("#register");
+      const searchHistory = document.querySelector("#search_history");
 
-      searchInput.onchange = async () => {
-        await search(searchInput.value);
-      };
+      // Function to check login status
+      async function checkLoginStatus() {
+        const usernameFromStorage = localStorage.getItem("username");
+        const token = localStorage.getItem("token");
 
-      window.onload = () => {
-        const pathname = window.location.pathname.split("").splice(1).join("");
-        if (pathname !== "") {
+        if (usernameFromStorage && token) {
+          // Hide login and register buttons
+          loginButton.style.display = "none";
+          registerButton.style.display = "none";
+
+          // Show logged-in user information
+          const userDiv = document.createElement("div");
+          userDiv.classList.add("text-text", "flex", "items-center", "space-x-4");
+
+          const usernameDisplay = `<span class="font-semibold">${usernameFromStorage}</span>`;
+          const logoutButton = `
+            <button id="logout" class="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-700 transition">
+              Logout
+            </button>
+          `;
+          userDiv.innerHTML = usernameDisplay + logoutButton;
+
+          document.querySelector(".flex.justify-between").appendChild(userDiv);
+
+          // Add logout functionality
+          document.querySelector("#logout").onclick = () => {
+            localStorage.removeItem("username");
+            localStorage.removeItem("token");
+            location.reload();
+          };
+
+          // Fetch and store search history
+          try {
+            const historyReq = await fetch("/api/history", {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            const history = await historyReq.text();
+            if (history.length > 0) {
+              document.cookie = `searchHistory=${history}; path=/;`;
+            }
+          } catch (err) {
+            console.error("Error fetching history:", err);
+          }
+        }
+      }
+
+      window.onload = async () => {
+        const pathname = window.location.pathname.slice(1);
+        if (pathname) {
           search(pathname);
           searchInput.value = pathname;
         }
+
+        // Check login status and handle UI
+        await checkLoginStatus();
       };
 
+      // Search function
       async function search(input, page = 1) {
-        history.pushState({}, null, `/${input}`);
-        if (input == "") {
+        if (input === "") {
+          history.pushState({}, null, "/");
           pagination.innerHTML = "";
           searchResults.innerHTML = "";
           searchTime.innerHTML = "";
           return;
         }
-        const req = await fetch(`./search/${searchInput.value}?page=${page}`);
+
+        history.pushState({}, null, `/${input}`);
+        const token = localStorage.getItem("token");
+
+        // Make the search API request
+        const req = await fetch(`./api/search/${input}?page=${page}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
         const body = await req.json();
-        const results = body.data.map((result, index) => {
+
+        const results = body.data.map((result) => {
           const faviconUrl = `https://www.google.com/s2/favicons?sz=64&domain_url=${new URL(result.url).origin}`;
           const descriptionContent = result.description
             ? `<p class="text-text-muted text-sm mt-2 truncate">${result.description}</p>`
@@ -125,28 +186,73 @@
                 )
                 .join("");
 
-          return `<div class="p-6 border border-base-200 rounded-md bg-base hover:bg-base-200 transition-all shadow-lg hover:shadow-2xl cursor-pointer"
-                      onclick="updateSidebar(${index})">
-                      <a href="/click/${result.id || result.ID}" class="flex items-center space-x-4 hover:underline">
-                        <img src="${faviconUrl}" alt="favicon" class="w-8 h-8 rounded" />
-                        <span class="text-lg font-semibold text-accent-blue hover:text-accent-green">
-                          ${result.title}
-                        </span>
-                      </a>
-                      ${descriptionContent}
-                    </div>`;
+          return `
+            <div class="p-6 border border-base-200 rounded-md bg-base hover:bg-base-200 transition shadow-lg hover:shadow-2xl cursor-pointer">
+              <a href="/click/${result.id}" class="flex items-center space-x-4 hover:underline">
+                <img src="${faviconUrl}" alt="favicon" class="w-8 h-8 rounded" />
+                <span class="text-lg font-semibold text-accent-blue hover:text-accent-green">
+                  ${result.title}
+                </span>
+              </a>
+              ${descriptionContent}
+            </div>
+          `;
         });
 
         searchResults.innerHTML = results.join("");
         searchTime.innerHTML = `Search time: <span class="font-semibold text-accent-yellow">${body.time}ms</span>`;
 
+        updateSearchHistoryDisplay(token);
+
         // Pagination
         const totalPages = body.total;
-        let paginationButtons = "";
-        for (let i = 1; i <= totalPages; i++) {
-          paginationButtons += `<button class="mx-1 px-3 py-1 rounded bg-base-200 hover:bg-accent-yellow hover:text-white transition-all text-text-muted text-lg font-semibold" onclick="search('${input}', ${i})">${i}</button>`;
+        pagination.innerHTML = Array.from({ length: totalPages }, (_, i) => {
+          return `
+            <button class="mx-1 px-3 py-1 rounded bg-base-200 hover:bg-accent-yellow hover:text-white transition text-text-muted text-lg font-semibold" onclick="search('${input}', ${
+            i + 1
+          })">
+              ${i + 1}
+            </button>
+          `;
+        }).join("");
+      }
+
+      async function updateSearchHistoryDisplay(token) {
+        if (token) {
+          try {
+            // Fetch history from backend
+            const res = await fetch("/api/history", {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            const history = await res.json();
+            renderSearchHistory(history);
+          } catch (err) {
+            console.error("Failed to fetch history from backend:", err);
+          }
+        } else {
+          // Fetch history from cookies
+          const currentHistory = document.cookie
+            .split("; ")
+            .find((row) => row.startsWith("searchHistory="))
+            ?.split("=")[1];
+          const historyArray = currentHistory ? JSON.parse(decodeURIComponent(currentHistory)) : [];
+          renderSearchHistory(historyArray);
         }
-        pagination.innerHTML = paginationButtons;
+      }
+
+      function renderSearchHistory(history) {
+        if (!Array.isArray(history) || history.length === 0) {
+          searchHistory.innerHTML = "<p class='text-text-muted'>No search history available</p>";
+          return;
+        }
+
+        searchHistory.innerHTML = history
+          .slice(-5)
+          .map(
+            (query) =>
+              `<button class="text-accent-blue hover:text-accent-green underline" onclick="search('${query}')">${query}</button>`
+          )
+          .join(", ");
       }
     </script>
   </body>

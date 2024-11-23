@@ -5,6 +5,7 @@ config();
 
 export const env = cleanEnv(process.env, {
   PORT: num(),
+  TOKEN_SECRET: str(),
   DB_HOST: str(),
   DB_PORT: num(),
   DB_USER: str(),

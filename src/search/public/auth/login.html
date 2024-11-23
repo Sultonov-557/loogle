@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              base: {
+                DEFAULT: "#24273A",
+                100: "#363A4F",
+                200: "#494D64",
+              },
+              overlay: "#1E2030",
+              text: {
+                DEFAULT: "#CAD3F5",
+                muted: "#A5ADCB",
+                accent: "#8AADF4",
+                highlight: "#F5A97F",
+              },
+              accent: {
+                blue: "#8AADF4",
+                peach: "#F5A97F",
+                green: "#A6DA95",
+                yellow: "#EED49F",
+              },
+            },
+            fontFamily: {
+              sans: ["Inter", "sans-serif"],
+            },
+            fontSize: {
+              base: "16px",
+              sm: "14px",
+              md: "18px",
+              lg: "20px",
+              xl: "24px",
+              "2xl": "28px",
+              "3xl": "32px",
+              "4xl": "36px",
+              "5xl": "40px",
+              "6xl": "44px",
+            },
+            animation: {
+              fadeIn: "fadeIn 0.5s ease-out",
+              slideUp: "slideUp 0.5s ease-out",
+            },
+            keyframes: {
+              fadeIn: {
+                from: { opacity: "0" },
+                to: { opacity: "1" },
+              },
+              slideUp: {
+                from: { transform: "translateY(10px)", opacity: "0" },
+                to: { transform: "translateY(0)", opacity: "1" },
+              },
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body class="flex items-center justify-center bg-base text-text min-h-screen">
+    <div class="max-w-7xl w-full p-6 bg-overlay rounded-lg shadow-lg gap-6 flex flex-col items-center">
+      <h2 class="text-2xl font-bold text-text">Login</h2>
+      <form class="flex flex-col gap-4" onsubmit="handleSubmit(event)">
+        <div class="flex flex-col">
+          <label for="username" class="text-sm text-text">Username</label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            class="p-2 bg-base-100 rounded-md border-2 border-base-200 focus:outline-none focus:ring-2 focus:ring-accent-blue focus:ring-opacity-50"
+            required
+          />
+        </div>
+        <div class="flex flex-col">
+          <label for="password" class="text-sm text-text">Password</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            class="p-2 bg-base-100 rounded-md border-2 border-base-200 focus:outline-none focus:ring-2 focus:ring-accent-blue focus:ring-opacity-50"
+            required
+          />
+        </div>
+        <button
+          type="submit"
+          class="bg-accent-blue text-white py-2 px-4 rounded-md hover:bg-accent-blue-200 transition duration-300"
+        >
+          Login
+        </button>
+      </form>
+    </div>
+    <script>
+      function handleSubmit(event) {
+        event.preventDefault();
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+        fetch("/api/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ username, password }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.token) {
+              localStorage.setItem("token", data.token);
+              localStorage.setItem("username", username); // Store the username alongside the token
+              window.location.href = "/"; // Redirect to the main page after successful login
+            } else {
+              alert("Login failed. Please try again.");
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+          });
+      }
+    </script>
+  </body>
+</html>
