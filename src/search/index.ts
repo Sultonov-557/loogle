@@ -114,7 +114,7 @@ export function start() {
       cache = JSON.parse(cache);
 
       const diff = Date.now() - cache.date;
-      if (diff > 1000 * 60 * 60 * 24) {
+      if (diff > 1000 * 60 * 60) {
         await redis.del(key);
       }
 

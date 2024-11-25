@@ -5,6 +5,6 @@ import * as Search from "./search/index";
 
 (async () => {
   await database.initialize();
-  //Crawler.start();
+  Crawler.start();
   Search.start();
 })();
