@@ -110,13 +110,8 @@ export function start() {
 
     const key = `${page || 1},${query}`;
     let cache: any = await redis.get(key);
-    if (cache) {
+    if (cache && Date.now() - JSON.parse(cache).data < 1000 * 60 * 60) {
       cache = JSON.parse(cache);
-
-      const diff = Date.now() - cache.date;
-      if (diff > 1000 * 60 * 60) {
-        await redis.del(key);
-      }
 
       const endTime = new Date();
       const searchTime = endTime.getTime() - startTime.getTime();
