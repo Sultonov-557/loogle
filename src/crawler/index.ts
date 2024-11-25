@@ -31,7 +31,6 @@ export function start() {
       workers.push(worker);
 
       if (!data.success) return;
-
       if (!(await WebPageRepo.existsBy({ url: data.url }))) {
         await WebPageRepo.save(
           WebPageRepo.create({
@@ -66,18 +65,16 @@ async function next() {
     (await QueueRepo.find({ take: 1 }))[0];
 
   if (queue) {
-    try {
-      if (!(await WebPageRepo.existsBy({ url: queue.url }))) {
-        console.log(`scraping ${queue.url}`);
-        worker.postMessage(queue.url);
-      } else {
-        workers.push(worker);
-      }
+    if (!(await WebPageRepo.existsBy({ url: queue.url }))) {
+      console.log(`scraping ${queue.url}`);
+      worker.postMessage(queue.url);
+    } else {
+      workers.push(worker);
+    }
 
-      if (!TEST_MODE) {
-        await QueueRepo.delete(queue);
-      }
-    } catch {}
+    if (!TEST_MODE) {
+      await QueueRepo.delete(queue);
+    }
   } else {
     workers.push(worker);
   }

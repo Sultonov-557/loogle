@@ -20,18 +20,23 @@ if (parentPort) {
       const res = await axios.get(url);
       const dom = parse(res.data);
 
-      const title = dom.querySelector("title")?.innerText;
+      const title = Buffer.from(dom.querySelector("title")?.innerText || "", "utf8").toString("utf8") || undefined;
       const meta: Record<string, string> = {};
       dom.querySelectorAll("meta").forEach((v) => {
-        meta[v.attributes.name] = v.attributes.content;
+        if (v.attributes.content) {
+          meta[v.attributes.name] = Buffer.from(v.attributes.content, "utf8").toString("utf8");
+        }
       });
 
       const keywords = meta.keywords;
 
       const headers = {
-        h1: dom.querySelectorAll("h1").map((v) => v.innerText),
-        h2: dom.querySelectorAll("h2").map((v) => v.innerText),
-        h3: dom.querySelectorAll("h3").map((v) => v.innerText),
+        h1:
+          dom.querySelectorAll("h1").map((v) => Buffer.from(v.innerText || "", "utf-8").toString("utf-8")) || undefined,
+        h2:
+          dom.querySelectorAll("h2").map((v) => Buffer.from(v.innerText || "", "utf-8").toString("utf-8")) || undefined,
+        h3:
+          dom.querySelectorAll("h3").map((v) => Buffer.from(v.innerText || "", "utf-8").toString("utf-8")) || undefined,
       };
 
       const queue = (
