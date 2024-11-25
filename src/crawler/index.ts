@@ -23,7 +23,7 @@ const TEST_MODE = false;
 let frame = 0;
 
 export function start() {
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 40; i++) {
     const worker = new Worker("./dist/crawler/bot.js");
     worker.on("message", async (data: ScrapeData) => {
       if (TEST_MODE) return;
@@ -54,7 +54,7 @@ export function start() {
 }
 
 async function next() {
-  setTimeout(next, 1000);
+  setTimeout(next, 10);
 
   const worker = workers.shift();
   if (!worker) return;
@@ -66,16 +66,18 @@ async function next() {
     (await QueueRepo.find({ take: 1 }))[0];
 
   if (queue) {
-    if (!(await WebPageRepo.existsBy({ url: queue.url }))) {
-      console.log(`scraping ${queue.url}`);
-      worker.postMessage(queue.url);
-    } else {
-      workers.push(worker);
-    }
+    try {
+      if (!(await WebPageRepo.existsBy({ url: queue.url }))) {
+        console.log(`scraping ${queue.url}`);
+        worker.postMessage(queue.url);
+      } else {
+        workers.push(worker);
+      }
 
-    if (!TEST_MODE) {
-      await QueueRepo.delete(queue);
-    }
+      if (!TEST_MODE) {
+        await QueueRepo.delete(queue);
+      }
+    } catch {}
   } else {
     workers.push(worker);
   }
