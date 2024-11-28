@@ -84,7 +84,7 @@
             </button>
           </div>
         </div>
-
+        <div id="suggestions" class="mt-4"></div>
         <div id="search_time" class="text-text-muted text-sm mb-4"></div>
         <div id="loading" class="hidden text-text-muted text-sm mb-4">Loading...</div>
         <div
@@ -103,6 +103,7 @@
       const loginButton = document.querySelector("#login");
       const registerButton = document.querySelector("#register");
       const searchHistory = document.querySelector("#search_history");
+      const suggestionsContainer = document.querySelector("#suggestions");
 
       // Function to check login status
       async function checkLoginStatus() {
@@ -154,7 +155,7 @@
         const pathname = window.location.pathname.slice(1);
         if (pathname) {
           search(pathname);
-          searchInput.value = pathname;
+          searchInput.value = pathname.replace(/%20/g, " ");
         }
 
         // Check login status and handle UI
@@ -169,6 +170,7 @@
           pagination.innerHTML = "";
           searchResults.innerHTML = "";
           searchTime.innerHTML = "";
+          suggestionsContainer.innerHTML = ""; // Clear suggestions container
           return;
         }
 
@@ -221,6 +223,23 @@
             </button>
           `;
         }).join("");
+
+        // Suggestions
+        if (body.suggestions && body.suggestions.length > 0) {
+          suggestionsContainer.innerHTML = `
+            <p class="text-text-muted text-sm mb-2">Did you mean:
+              ${body.suggestions.map(
+                (v) => `
+                <a href="/${v}" class="text-accent-blue hover:text-accent-green">
+                  ${v}
+                  </a>
+                  `
+              )}
+                </p>
+          `;
+        } else {
+          suggestionsContainer.innerHTML = ""; // Clear suggestions container if no suggestions
+        }
       }
 
       async function updateSearchHistoryDisplay() {

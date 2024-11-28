@@ -7,9 +7,11 @@ import { hash } from "crypto";
 import { sign, verify } from "jsonwebtoken";
 import { env } from "../config";
 import { Auth } from "./middleware";
+import Typo from "typo-js";
 
 export function start() {
   const app = express();
+  const typo = new Typo("en_US");
 
   app.use(express.static(path.join(__dirname, "../../src/search/public"), { extensions: ["html"] }));
   app.use(express.json());
@@ -104,13 +106,14 @@ export function start() {
   });
 
   app.get("/api/search/:query", Auth, async (req: Request & { user?: number }, res) => {
-    const { query } = req.params;
+    let { query } = req.params;
     const { page } = req.query as { page: string };
+    query = query.toLocaleLowerCase();
     const startTime = new Date();
 
     const key = `${page || 1},${query}`;
     let cache: any = await redis.get(key);
-    if (cache && Date.now() - JSON.parse(cache).data < 1000 * 60 * 60) {
+    if (cache && Date.now() - JSON.parse(cache).data < 0 /*1000 * 60 * 60*/) {
       cache = JSON.parse(cache);
 
       const endTime = new Date();
@@ -165,6 +168,21 @@ export function start() {
         ],
       });
 
+      const suggestions = Array.from(
+        new Set(
+          query.split(" ").flatMap((word, i, arr) => {
+            if (!typo.check(word)) {
+              return typo.suggest(word).map((v) => {
+                let out = [...arr];
+                out[i] = v;
+                return out.join(" ").toLocaleLowerCase();
+              });
+            }
+            return [];
+          })
+        )
+      );
+
       const totalPages = Math.ceil(totalResults / limit);
 
       const endTime = new Date();
@@ -172,6 +190,7 @@ export function start() {
 
       const output = {
         data,
+        suggestions,
         time: searchTime,
         current: parseInt(page, 10),
         total: totalPages,

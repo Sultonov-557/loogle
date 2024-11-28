@@ -79,7 +79,7 @@ async function next() {
     workers.push(worker);
   }
 
-  if (frame == 50) {
+  if (frame == 100) {
     frame = 0;
     await database.query(`
       DELETE FROM queue T1
